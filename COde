@@ -1,0 +1,72 @@
+import java.io.*;
+import java.util.Scanner;
+
+public class TextEditor {
+
+    private static String[] fileContent = new String[100]; 
+    private static int currentLine = 0;  
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        int choice;
+
+        while (true) {
+
+            System.out.println("Меню:");
+            System.out.println("1. Записати до файлу");
+            System.out.println("2. Прочитати вміст файлу");
+            System.out.println("3. Вийти");
+            System.out.print("Виберіть дію (1/2/3): ");
+            
+            try {
+                choice = Integer.parseInt(scanner.nextLine());
+                
+                switch (choice) {
+                    case 1:
+                        writeToFile(scanner);
+                        break;
+                    case 2:
+                        readFromFile();
+                        break;
+                    case 3:
+                        System.out.println("Вихід з програми...");
+                        return; 
+                    default:
+                        System.out.println("Невірний вибір. Спробуйте ще раз.");
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Помилка: введіть число.");
+            }
+        }
+    }
+
+    private static void writeToFile(Scanner scanner) {
+        System.out.println("Введіть рядок для запису (для завершення введення введіть порожній рядок):");
+        
+        String line;
+        while (true) {
+            line = scanner.nextLine();
+            if (line.isEmpty()) {
+                break; 
+            }
+            if (currentLine < fileContent.length) {
+                fileContent[currentLine++] = line;  
+            } else {
+                System.out.println("Досягнуто максимальний розмір файлу.");
+                break;
+            }
+        }
+        System.out.println("Записано до файлу.");
+    }
+
+    private static void readFromFile() {
+        if (currentLine == 0) {
+            System.out.println("Файл порожній.");
+        } else {
+            System.out.println("Вміст файлу:");
+            for (int i = 0; i < currentLine; i++) {
+                System.out.println(fileContent[i]);
+            }
+        }
+    }
+}
