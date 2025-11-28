@@ -1,72 +1,243 @@
-import java.io.*;
-import java.util.Scanner;
+import java.util.ArrayList;
+import java.util.List;
 
-public class TextEditor {
-
-    private static String[] fileContent = new String[100]; 
-    private static int currentLine = 0;  
+public class Main {
 
     public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
-        int choice;
-
-        while (true) {
-
-            System.out.println("Меню:");
-            System.out.println("1. Записати до файлу");
-            System.out.println("2. Прочитати вміст файлу");
-            System.out.println("3. Вийти");
-            System.out.print("Виберіть дію (1/2/3): ");
-            
-            try {
-                choice = Integer.parseInt(scanner.nextLine());
-                
-                switch (choice) {
-                    case 1:
-                        writeToFile(scanner);
-                        break;
-                    case 2:
-                        readFromFile();
-                        break;
-                    case 3:
-                        System.out.println("Вихід з програми...");
-                        return; 
-                    default:
-                        System.out.println("Невірний вибір. Спробуйте ще раз.");
-                }
-            } catch (NumberFormatException e) {
-                System.out.println("Помилка: введіть число.");
-            }
-        }
-    }
-
-    private static void writeToFile(Scanner scanner) {
-        System.out.println("Введіть рядок для запису (для завершення введення введіть порожній рядок):");
         
-        String line;
-        while (true) {
-            line = scanner.nextLine();
-            if (line.isEmpty()) {
-                break; 
-            }
-            if (currentLine < fileContent.length) {
-                fileContent[currentLine++] = line;  
-            } else {
-                System.out.println("Досягнуто максимальний розмір файлу.");
-                break;
-            }
+        System.out.println("=== 1. Демонстрація Ієрархії Person (Поліморфізм) ===");
+        
+        Person[] people = new Person[2];
+        people[0] = new Reader("R001", "Іван Петренко", "050-123-45-67");
+        people[1] = new Librarian("L001", "Марія Васильевна", "09:00-17:00");
+        
+        for (Person p : people) {
+            p.printDetails();
+            System.out.println("---------------");
         }
-        System.out.println("Записано до файлу.");
+
+        System.out.println("\n=== 2. Демонстрація Ієрархії Publication (Поліморфізм) ===");
+        
+        Publication[] items = new Publication[3];
+        items[0] = new Book("978-0321", "Clean Code", "Robert Martin", 2008);
+        items[1] = new Magazine("National Geographic", 2024, 5);
+        items[2] = new FictionBook("978-0743", "It", "Stephen King", 1986, "Horror");
+        
+        for (Publication item : items) {
+            System.out.println("\nОб'єкт: " + item.toString());
+            item.issue();
+            System.out.println("Доступна? " + item.isAvailable());
+        }
+        
+        System.out.println("\n=== 3. Демонстрація всіх класів ===");
+        Reader reader = (Reader) people[0];
+        Publication book = items[0];
+        
+        reader.borrowItem(book);
+        
+        System.out.println("\n=== 4. Демонстрація package-private доступу ===");
+        Librarian librarian = (Librarian) people[1];
+        librarian.checkReaderNotes(reader);
+        
+        System.out.println("Доступ до package-private полів з того ж пакету:");
+        reader.internalNotes = "Нова нотатка (встановлено з Main)";
+        System.out.println("Нове значення: " + reader.internalNotes);
+        reader.updateInternalNotes("Оновлено через метод");
+    }
+}
+
+abstract class Person {
+
+    protected String id;
+    protected String fullName;
+    
+    String internalNotes; 
+
+    public Person(String id, String fullName) {
+        this.id = id;
+        this.fullName = fullName;
+        this.internalNotes = "N/A";
     }
 
-    private static void readFromFile() {
-        if (currentLine == 0) {
-            System.out.println("Файл порожній.");
-        } else {
-            System.out.println("Вміст файлу:");
-            for (int i = 0; i < currentLine; i++) {
-                System.out.println(fileContent[i]);
-            }
-        }
+    public String getFullName() {
+        return fullName;
+    }
+    
+    public void printDetails() {
+        System.out.println("Person ID: " + id + ", Name: " + fullName);
+    }
+    
+    void updateInternalNotes(String notes) {
+        System.out.println("Updating internal notes for " + fullName + " to: " + notes);
+        this.internalNotes = notes;
+    }
+}
+
+abstract class Publication {
+
+    protected String title;
+    protected int publicationYear;
+    protected String status;
+
+    public Publication(String title, int publicationYear) {
+        this.title = title;
+        this.publicationYear = publicationYear;
+        this.status = "в наявності";
+    }
+
+    public void issue() {
+        System.out.println("Issuing publication: " + title);
+        this.status = "видана";
+    }
+
+    public void returnItem() {
+        System.out.println("Returning publication: " + title);
+        this.status = "в наявності";
+    }
+
+    public boolean isAvailable() {
+        return this.status.equals("в наявності");
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    @Override
+    public String toString() {
+        return "Publication{" +
+                "title='" + title + '\'' +
+                ", year=" + publicationYear +
+                ", status='" + status + '\'' +
+                '}';
+    }
+}
+
+class Reader extends Person {
+
+    private String phoneNumber;
+    private List<Publication> borrowedItems;
+
+    public Reader(String id, String fullName, String phoneNumber) {
+        super(id, fullName);
+        this.phoneNumber = phoneNumber;
+        this.borrowedItems = new ArrayList<>();
+    }
+    
+    @Override
+    public void printDetails() {
+        System.out.println("--- ЧИТАЧ ---");
+        System.out.println("ID: " + id);
+        System.out.println("ПІБ: " + fullName);
+        System.out.println("Телефон: " + phoneNumber);
+    }
+
+    public void borrowItem(Publication item) {
+        System.out.println(this.fullName + " бере " + item.getTitle());
+        this.borrowedItems.add(item);
+    }
+}
+
+class Librarian extends Person {
+
+    private String shift;
+
+    public Librarian(String id, String fullName, String shift) {
+        super(id, fullName);
+        this.shift = shift;
+    }
+
+    @Override
+    public void printDetails() {
+        System.out.println("--- БІБЛІОТЕКАР ---");
+        System.out.println("ID: " + id);
+        System.out.println("ПІБ: " + fullName);
+        System.out.println("Зміна: " + shift);
+    }
+    
+    public void checkReaderNotes(Reader reader) {
+        System.out.println("Перевірка нотаток для " + reader.getFullName());
+        System.out.println("Нотатки: " + reader.internalNotes);
+    }
+}
+
+class Book extends Publication {
+
+    private String isbn;
+    private String author;
+
+    public Book(String isbn, String title, String author, int publicationYear) {
+        super(title, publicationYear);
+        this.isbn = isbn;
+        this.author = author;
+    }
+
+    @Override
+    public void issue() {
+        System.out.println("Видача КНИГИ: '" + this.title + "' (Автор: " + author + ")");
+        this.status = "видана";
+    }
+
+    @Override
+    public String toString() {
+        return "Book{" +
+                "title='" + title + '\'' +
+                ", author='" + author + '\'' +
+                ", status='" + status + '\'' +
+                '}';
+    }
+}
+
+class Magazine extends Publication {
+
+    private int issueNumber;
+
+    public Magazine(String title, int publicationYear, int issueNumber) {
+        super(title, publicationYear);
+        this.issueNumber = issueNumber;
+    }
+
+    @Override
+    public void issue() {
+        System.out.println("Видача ЖУРНАЛУ: '" + this.title + "' (№ " + issueNumber + ")");
+        this.status = "видана";
+    }
+    
+    @Override
+    public void returnItem() {
+        System.out.println("Повернення ЖУРНАЛУ: '" + this.title + "'");
+        this.status = "в наявності";
+    }
+    
+    @Override
+    public boolean isAvailable() {
+        System.out.println("Перевірка наявності журналу...");
+        return this.status.equals("в наявності");
+    }
+}
+
+class FictionBook extends Book {
+
+    private String genre;
+
+    public FictionBook(String isbn, String title, String author, int publicationYear, String genre) {
+        super(isbn, title, author, publicationYear);
+        this.genre = genre;
+    }
+    
+    @Override
+    public void issue() {
+        System.out.println("Видача ХУДОЖНЬОЇ КНИГИ: '" + this.title + "' (Жанр: " + genre + ")");
+        this.status = "видана";
+    }
+
+    @Override
+    public String toString() {
+         return "FictionBook{" +
+                "title='" + title + '\'' +
+                ", author='" + author + '\'' +
+                ", genre='" + genre + '\'' +
+                ", status='" + status + '\'' +
+                '}';
     }
 }
